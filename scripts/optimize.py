@@ -4,9 +4,7 @@ from datetime import datetime
 def find_stopped_instances(region="ap-south-1"):
     ec2 = boto3.client('ec2', region_name=region)
     response = ec2.describe_instances(
-        Filters=[
-            {"Name": "instance-state-name", "Values": ["stopped"]}
-        ]
+        Filters=[{"Name": "instance-state-name", "Values": ["stopped"]}]
     )
     
     stopped_instances = []
@@ -19,15 +17,28 @@ def find_stopped_instances(region="ap-south-1"):
 def find_unattached_volumes(region="ap-south-1"):
     ec2 = boto3.client('ec2', region_name=region)
     response = ec2.describe_volumes(
-        Filters=[
-            {"Name": "status", "Values": ["available"]}
-        ]
+        Filters=[{"Name": "status", "Values": ["available"]}]
     )
 
     volumes = []
     for volume in response['Volumes']:
         volumes.append(volume['VolumeId'])
     return volumes
+
+def get_total_aws_cost():
+    ce = boto3.client('ce')
+    start = datetime.today().replace(day=1).strftime('%Y-%m-%d')
+    end = datetime.today().strftime('%Y-%m-%d')
+
+    response = ce.get_cost_and_usage(
+        TimePeriod={'Start': start, 'End': end},
+        Granularity='MONTHLY',
+        Metrics=['UnblendedCost']
+    )
+
+    amount = response['ResultsByTime'][0]['Total']['UnblendedCost']['Amount']
+    currency = response['ResultsByTime'][0]['Total']['UnblendedCost']['Unit']
+    return float(amount), currency
 
 if __name__ == "__main__":
     region = "ap-south-1"
@@ -47,15 +58,26 @@ if __name__ == "__main__":
             print("✅ No stopped instances found.")
             f.write("No stopped EC2 instances found.\n")
 
-    # Check for Unattached EBS Volumes
+    print("\n🔍 Checking for unattached EBS volumes...")
     unattached = find_unattached_volumes(region)
     with open(log_file, "a") as f:
         if unattached:
-            print(f"\n💾 Found {len(unattached)} unattached EBS volume(s):")
+            print(f"💾 Found {len(unattached)} unattached EBS volume(s):")
             f.write("\nUnattached EBS Volumes:\n")
             for vol in unattached:
                 print(f"  → {vol}")
                 f.write(f"{vol}\n")
         else:
-            print("\n✅ No unattached EBS volumes found.")
+            print("✅ No unattached EBS volumes found.")
             f.write("\nNo unattached EBS volumes found.\n")
+
+    print("\n💰 Fetching total AWS bill for the current month...")
+    try:
+        total_cost, currency = get_total_aws_cost()
+        print(f"📊 Total AWS Cost (till today): {total_cost:.2f} {currency}")
+        with open(log_file, "a") as f:
+            f.write(f"\nTotal AWS Cost (till today): {total_cost:.2f} {currency}\n")
+    except Exception as e:
+        print(f"❌ Failed to fetch billing data: {e}")
+        with open(log_file, "a") as f:
+            f.write(f"\nFailed to fetch AWS billing data: {e}\n")
