@@ -2,8 +2,7 @@ name: Cloud Cost Optimizer
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Runs every day at 3 AM UTC
-  workflow_dispatch:     # Manual trigger option
+    - cron: '*/1 * * * *'  # ⏱️ Runs automatically every 1 minute (UTC)
 
 jobs:
   run-optimizer:
@@ -25,5 +24,4 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ap-south-1
         run: python scripts/optimize.py
