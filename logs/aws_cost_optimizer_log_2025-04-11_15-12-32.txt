@@ -1,0 +1,4 @@
+Stopped EC2 Instances:
+i-0b73e1d3462c45cf4
+
+No unattached EBS volumes found.
