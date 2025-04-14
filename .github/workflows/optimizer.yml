@@ -1,8 +1,7 @@
 name: Cloud Cost Optimizer
-
-on:
-    schedule:
-      - cron: '*/10 * * * *'  # Runs every 10 minutes
+#on:
+    #schedule:
+     - cron: '*/10 * * * *'  # Runs every 10 minutes
 
 jobs:
   run-optimizer:
